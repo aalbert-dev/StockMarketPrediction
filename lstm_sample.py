@@ -8,14 +8,6 @@ LAYERS = 3
 OUTPUT_SIZE = 1
 
 class LSTM(nn.Module):
-	'''
-	you can customize the parameters of your model
-	input_size is the number of features of each input time-series data, e.g. 10
-	output_size stands for the dimension of model's output vector, e.g. 1
-	1 means a scalar value output for each input series
-	For classification, output_size should be the number of classes you want to classify
-	e.g., if you want to classify each input data into five categories, then output_size = 5
-	'''
     def __init__(self, input_size=INPUT_SIZE, hidden_size=H_SIZE, num_layers=LAYERS, output_size=OUTPUT_SIZE):
         super(LSTM, self).__init__()
 
@@ -32,10 +24,6 @@ class LSTM(nn.Module):
 
         # self.embedding = nn.Linear(128, 64)           # Linear transformation could also do embedding, optional
 
-        '''
-        Below are some common activation layers. They are optional based on your implementation
-        Usually use zero or one of the activation functions
-        '''
         self.relu = nn.ReLU() 			 # ReLU activiation, if want non-negative outputs
         self.softmax = nn.Softmax(dim=1) # Softmax activation, best for output a distribution of probability
         self.sigmoid = nn.Sigmoid() 	 # Sigmoid activation, map output value into (0, 1) interval
