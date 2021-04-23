@@ -32,6 +32,7 @@ def get_stock_data(name):
 def get_stock_contents(sample):
     # Date, Open, High, Low, Close, Volume, Dividends, Stock Splits, Symbol, Sector, Industry
     date = datetime.strptime(sample[0], "%Y-%m-%d")
+    # TODO convert date that to total # of seconds
     open_ = float(sample[1])
     high = float(sample[2])
     low = float(sample[3])
@@ -42,7 +43,25 @@ def get_stock_contents(sample):
     symbol = str(sample[8])
     sector = str(sample[9])
     industry = str(sample[10])
-    return [date, open_, high, low, close, volume, dividends, stock_splits, symbol, sector, industry]
+    class_ = get_stock_movement_class(open_, close)
+    return [date, open_, high, low, close, volume, dividends, stock_splits, symbol, sector, industry, class_]
+
+def get_stock_movement_class(open_, close):
+    class_ = None
+    diff = close - open_
+    percent_diff = diff / open_ * 100
+    if percent_diff > 5: 
+        class_ = 0 # > 5%
+    elif percent_diff > 2:
+        class_ = 1 # > 2%
+    elif percent_diff < 2 and percent_diff > -2:
+        class_ = 2 # < 2% , > -2%
+    elif percent_diff < -2 and percent_diff > -5:
+        class_ = 3 # < -2%
+    elif percent_diff < -5:
+        class_ = 4 # < -5%
+    assert(class_ is not None)
+    return class_
 
 
 all_stock_data = [get_stock_data(stock_name) for stock_name in stock_names]
