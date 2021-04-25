@@ -6,12 +6,23 @@ stock_data_path = "/home/arjun/Desktop/Programming Assignments/StockMarketPredic
 
 min_data_length = 90
 
+
 def get_stock_names():
     with open(stock_names_path) as f:
         return next(f).split(",")
 
 
 stock_names = get_stock_names()
+
+
+def get_stock_paths():
+    stock_paths = []
+    for name in stock_names:
+        stock_paths.append(os.path.join(stock_data_path, name.strip() + ".csv"))
+    return stock_paths
+
+
+stock_data_paths = get_stock_paths()
 
 
 def get_stock_data(name):
@@ -21,7 +32,7 @@ def get_stock_data(name):
     with open(full_name) as f:
         for row in f:
             if not first_row:
-                if len(row) > min_data_length: 
+                if len(row) > min_data_length:
                     contents = row.rstrip().split(",")
                     stock_data.append(get_stock_contents(contents))
             else:
@@ -46,20 +57,21 @@ def get_stock_contents(sample):
     class_ = get_stock_movement_class(open_, close)
     return [date, open_, high, low, close, volume, dividends, stock_splits, symbol, sector, industry, class_]
 
+
 def get_stock_movement_class(open_, close):
     class_ = None
     diff = close - open_
     percent_diff = diff / open_ * 100
-    if percent_diff > 5: 
-        class_ = 0 # > 5%
+    if percent_diff > 5:
+        class_ = 0  # > 5%
     elif percent_diff > 2:
-        class_ = 1 # > 2%
+        class_ = 1  # > 2%
     elif percent_diff < 2 and percent_diff > -2:
-        class_ = 2 # < 2% , > -2%
+        class_ = 2  # < 2% , > -2%
     elif percent_diff < -2 and percent_diff > -5:
-        class_ = 3 # < -2%
+        class_ = 3  # < -2%
     elif percent_diff < -5:
-        class_ = 4 # < -5%
+        class_ = 4  # < -5%
     assert(class_ is not None)
     return class_
 
