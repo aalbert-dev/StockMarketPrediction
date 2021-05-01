@@ -151,5 +151,81 @@ def generate():
         stocks_pd[s].to_csv(f"weighted_data/{s}.csv", index=False)
 
 
+def generate_by_sector():
+    stocks_df = {}
+    stocks_by_sector = {}
+    stocks_by_industry = {}
+
+    for fname in os.listdir("weighted_data"):
+        if fname.endswith(".csv"):
+            df = pd.read_csv(f"weighted_data/{fname}")
+            sym = fname[:-4]
+            sector = df.iloc[0]["Sector"]
+            industry = df.iloc[0]["Industry"]
+            stocks_df[sym] = df.replace(np.nan, 0)
+
+            if sector not in stocks_by_sector:
+                stocks_by_sector[sector] = [sym]
+            else:
+                stocks_by_sector[sector].append(sym)
+
+            if industry not in stocks_by_industry:
+                stocks_by_industry[industry] = [sym]
+            else:
+                stocks_by_industry[industry].append(sym)
+
+    # Export stocks by sector as individual csv
+    for k in stocks_by_sector.keys():
+        sector_df = pd.DataFrame()
+
+        for sym in stocks_by_sector[k]:
+            df = stocks_df[sym]
+            sector_df["Date"] = df["Date"]
+            sector_df["Weighted Sector Change"] = df["Weighted Sector Change"]
+            sector_df[f"{sym} Change"] = df["Day Change"]
+
+        fname = k.replace(" ", "")
+        sector_df.to_csv(f"weighted_data/by_sector/{fname}.csv", index=False)
+
+
+def generate_by_industry():
+    stocks_df = {}
+    stocks_by_sector = {}
+    stocks_by_industry = {}
+
+    for fname in os.listdir("weighted_data"):
+        if fname.endswith(".csv"):
+            df = pd.read_csv(f"weighted_data/{fname}")
+            sym = fname[:-4]
+            sector = df.iloc[0]["Sector"]
+            industry = df.iloc[0]["Industry"]
+            stocks_df[sym] = df.replace(np.nan, 0)
+
+            if sector not in stocks_by_sector:
+                stocks_by_sector[sector] = [sym]
+            else:
+                stocks_by_sector[sector].append(sym)
+
+            if industry not in stocks_by_industry:
+                stocks_by_industry[industry] = [sym]
+            else:
+                stocks_by_industry[industry].append(sym)
+
+    # Export stocks by industry as individual csv
+    for k in stocks_by_industry.keys():
+        industry_df = pd.DataFrame()
+
+        for sym in stocks_by_industry[k]:
+            df = stocks_df[sym]
+            industry_df["Date"] = df["Date"]
+            industry_df["Weighted Industry Change"] = df["Weighted Industry Change"]
+            industry_df[f"{sym} Change"] = df["Day Change"]
+
+        fname = k.replace(" ", "").replace("/", "_")
+        industry_df.to_csv(f"weighted_data/by_industry/{fname}.csv", index=False)
+
+
 if __name__ == "__main__":
     generate()
+    generate_by_sector()
+    generate_by_industry()
