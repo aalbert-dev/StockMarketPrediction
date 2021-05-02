@@ -21,8 +21,37 @@ interested_stocks = [
 ]
 
 
+def join_extra_data():
+    stocks_df = {}
+    stocks_extra_df = {}
+
+    print("Joining extra data to existing data")
+    for fname in os.listdir("data"):
+        if fname.endswith(".csv"):
+            df = pd.read_csv(f"data/{fname}")
+            sym = fname[:-4]
+            stocks_df[sym] = df.replace(np.nan, 0)
+
+    for fname in os.listdir("extra_data"):
+        if fname.endswith(".csv"):
+            df = pd.read_csv(f"extra_data/{fname}")
+            sym = fname[:-10]
+            stocks_extra_df[sym] = df.replace(np.nan, 0)
+
+    for sym, df in stocks_df.items():
+        extra_df = stocks_extra_df[sym]
+        extra_df["Symbol"] = pd.Series([df.iloc[0]["Symbol"] for i in range(11)])
+        extra_df["Sector"] = pd.Series([df.iloc[0]["Sector"] for i in range(11)])
+        extra_df["Industry"] = pd.Series([df.iloc[0]["Industry"] for i in range(11)])
+        added_df = pd.concat(
+            [df, extra_df],
+            ignore_index=True,
+        )
+        added_df.to_csv(f"complete_data/{sym}.csv", index=False)
+
+
 def generate():
-    stocks_pd = {}
+    stocks_df = {}
     stocks_by_sector = {}
     stocks_by_industry = {}
 
@@ -33,7 +62,7 @@ def generate():
             sym = fname[:-4]
             sector = df.iloc[0]["Sector"]
             industry = df.iloc[0]["Industry"]
-            stocks_pd[sym] = df.replace(np.nan, 0)
+            stocks_df[sym] = df.replace(np.nan, 0)
 
             if sector not in stocks_by_sector:
                 stocks_by_sector[sector] = [sym]
@@ -47,9 +76,9 @@ def generate():
 
     # Fix dates
     replacements = {}
-    sample_stock = stocks_pd["VZ"]
+    sample_stock = stocks_df["VZ"]
 
-    for k, s in stocks_pd.items():
+    for k, s in stocks_df.items():
         idx = sample_stock[
             sample_stock["Date"] == s.iloc[0]["Date"]
         ].index.values.astype(int)[0]
@@ -80,7 +109,7 @@ def generate():
             replacements[k] = pd.concat([empty_rows, s], ignore_index=True)
 
         for k, s in replacements.items():
-            stocks_pd[k] = s
+            stocks_df[k] = s
 
     # Found all industries/sectors of the interested stocks
     interested_sectors = []
@@ -88,7 +117,7 @@ def generate():
 
     print("Grabbing all interested sectors and industries")
     for s in interested_stocks:
-        df = stocks_pd[s]
+        df = stocks_df[s]
         sector = df.iloc[0]["Sector"]
         industry = df.iloc[0]["Industry"]
         interested_sectors.append(sector)
@@ -99,26 +128,26 @@ def generate():
 
     # Get day change
     print("Calculating all daily change")
-    for s in stocks_pd.keys():
-        df = stocks_pd[s]
+    for s in stocks_df.keys():
+        df = stocks_df[s]
         movement = (df["Close"] - df["Open"]) / df["Open"]
         df["Day Change"] = movement.fillna(0)
 
     # Get sector day change
     print("Calculating all daily change for sector")
-    days = len(stocks_pd["VZ"].index)
+    days = len(stocks_df["VZ"].index)
 
     for sector in stocks_by_sector.keys():
         sector_vol = pd.Series(data=np.zeros(days))
         sector_total_vol = pd.Series(data=np.zeros(days))
 
         for s in stocks_by_sector[sector]:
-            df = stocks_pd[s]
+            df = stocks_df[s]
             sector_total_vol = sector_total_vol + df["Volume"]
             sector_vol = sector_vol + (df["Day Change"] * df["Volume"])
 
         for s in stocks_by_sector[sector]:
-            df = stocks_pd[s]
+            df = stocks_df[s]
             df["Weighted Sector Change"] = sector_vol / sector_total_vol
 
     # Get industry day change
@@ -128,12 +157,12 @@ def generate():
         industry_total_vol = pd.Series(data=np.zeros(days))
 
         for s in stocks_by_industry[industry]:
-            df = stocks_pd[s]
+            df = stocks_df[s]
             industry_total_vol = industry_total_vol + df["Volume"]
             industry_vol = industry_vol + (df["Day Change"] * df["Volume"])
 
         for s in stocks_by_industry[industry]:
-            df = stocks_pd[s]
+            df = stocks_df[s]
             df["Weighted Industry Change"] = industry_vol / industry_total_vol
 
     # Export stocks
@@ -141,14 +170,14 @@ def generate():
     export_stocks = np.copy(interested_stocks)
 
     for in_s in interested_stocks:
-        sector = stocks_pd[in_s].iloc[0]["Sector"]
+        sector = stocks_df[in_s].iloc[0]["Sector"]
         export_stocks = np.append(export_stocks, stocks_by_sector[sector], 0)
-        industry = stocks_pd[in_s].iloc[0]["Industry"]
+        industry = stocks_df[in_s].iloc[0]["Industry"]
         export_stocks = np.append(export_stocks, stocks_by_industry[industry], 0)
 
     export_stocks = np.unique(export_stocks)
     for s in export_stocks:
-        stocks_pd[s].to_csv(f"weighted_data/{s}.csv", index=False)
+        stocks_df[s].to_csv(f"weighted_data/{s}.csv", index=False)
 
 
 def generate_by_sector():
@@ -156,6 +185,7 @@ def generate_by_sector():
     stocks_by_sector = {}
     stocks_by_industry = {}
 
+    print("Grouping data by sector")
     for fname in os.listdir("weighted_data"):
         if fname.endswith(".csv"):
             df = pd.read_csv(f"weighted_data/{fname}")
@@ -193,6 +223,7 @@ def generate_by_industry():
     stocks_by_sector = {}
     stocks_by_industry = {}
 
+    print("Grouping data by industry")
     for fname in os.listdir("weighted_data"):
         if fname.endswith(".csv"):
             df = pd.read_csv(f"weighted_data/{fname}")
@@ -226,6 +257,7 @@ def generate_by_industry():
 
 
 if __name__ == "__main__":
-    generate()
-    generate_by_sector()
-    generate_by_industry()
+    # generate()
+    # generate_by_sector()
+    # generate_by_industry()
+    join_extra_data()
