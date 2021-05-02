@@ -26,9 +26,9 @@ def join_extra_data():
     stocks_extra_df = {}
 
     print("Joining extra data to existing data")
-    for fname in os.listdir("data"):
+    for fname in os.listdir("weighted_data"):
         if fname.endswith(".csv"):
-            df = pd.read_csv(f"data/{fname}")
+            df = pd.read_csv(f"weighted_data/{fname}")
             sym = fname[:-4]
             stocks_df[sym] = df.replace(np.nan, 0)
 
@@ -48,6 +48,20 @@ def join_extra_data():
             ignore_index=True,
         )
         added_df.to_csv(f"complete_data/{sym}.csv", index=False)
+
+
+def generate_master_table():
+    stocks = pd.DataFrame()
+
+    for fname in os.listdir("complete_data"):
+        if fname.endswith(".csv") and fname != "master.csv":
+            df = pd.read_csv(f"complete_data/{fname}")
+            sym = fname[:-4]
+            df = df.replace(np.nan, 0)
+            stocks["Date"] = df["Date"]
+            stocks[f"{sym}"] = df["Close"]
+
+    stocks.to_csv("complete_data/master.csv", index=False)
 
 
 def generate():
@@ -260,4 +274,5 @@ if __name__ == "__main__":
     # generate()
     # generate_by_sector()
     # generate_by_industry()
-    join_extra_data()
+    # join_extra_data()
+    generate_master_table()
