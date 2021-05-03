@@ -1,0 +1,3 @@
+[submodule "informer"]
+	path = informer
+	url = https://github.com/hojulian/stock-prediction-informer2020.git
